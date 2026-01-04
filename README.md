@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # GeoServer 综合漏洞利用平台
 
 美化后的图形化界面工具，集成了多个 GeoServer 重要漏洞的利用功能。
@@ -174,4 +175,8 @@ go build
 
 **最后更新**：2026年1月2日  
 **版本**：2.0 (GUI 美化版)
+=======
+# Geoserver漏洞图形化利用工具，功能包含命令执行、反弹shell、低版本JDK注入内存马、XXE漏洞利用
+<img width="1214" height="928" alt="image" src="https://github.com/user-attachments/assets/a7b5f945-f3cd-4e64-be88-ef068db2af44" />
+>>>>>>> 8de26c9d73fa53abb87e175eb674d29c088168ff
 
