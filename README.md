@@ -1,6 +1,7 @@
 # GeoServer 漏洞利用工具
 
 一个简洁高效的 GeoServer 漏洞验证平台，提供图形化界面和多个常见漏洞的利用功能。
+<img width="1434" height="1012" alt="image" src="https://github.com/user-attachments/assets/5114af24-a1cd-4ac3-9219-d0a7ec0ec837" />
 
 ## 功能模块
 
