@@ -57,49 +57,7 @@ go build
 └── README.md
 ```
 
-## 技术栈
 
-- **语言**：Go 1.21+
-- **GUI**：Fyne v2.5.1
-- **HTTP**：标准库 net/http
-
-## 注意事项
-
-- 仅用于授权的安全测试，违法使用后果自负
-- 某些漏洞可能在新版本 GeoServer 中已修复
-- 建议在隔离环境中测试
-   - ✓ 实现 ExploitModule 元数据结构
-   - ✓ 动态参数表单生成（根据选中模块显示不同字段）
-   - ✓ Markdown 支持的详细描述面板
-   - ✓ 异步执行和实时反馈
-
-3. **代码清理**
-   - ✓ 删除过时的导入（bytes, crypto/tls, encoding/base64 等）
-   - ✓ 删除旧的 exploit2() 和 exploit() 函数
-   - ✓ 统一按钮回调处理逻辑
-   - ✓ 简化 proxySettingsWindow() 实现
-
-### 核心函数说明
-
-#### `formatTargetURL(input string) string`
-- 功能：将用户输入的 URL 格式化为标准的 GeoServer WFS 端点
-- 支持多种输入格式：IP、IP:PORT、完整 URL 等
-- 返回：标准化后的目标 URL 或空字符串（格式错误）
-
-#### `executeExploit(moduleName string, targetURL string, params []string) (string, error)`
-- 功能：路由到对应的漏洞利用函数
-- 参数检查和错误处理
-- 返回：执行结果或错误信息
-
-#### `proxySettingsWindow()`
-- 功能：打开代理配置窗口
-- 支持保存和清除代理设置
-- 实时更新主窗口的代理标签
-
-#### `main()`
-- 功能：初始化 Fyne 应用和 GUI
-- 组织左右两列布局
-- 处理模块选择和参数动态更新
 
 ## 使用示例
 
